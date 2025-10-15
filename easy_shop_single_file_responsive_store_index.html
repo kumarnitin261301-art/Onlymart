@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EasyShop — Simple Mobile-Friendly Store</title>
+  <meta name="description" content="A single-file, mobile-first demo store (T-shirts, accessories). Edit products in the JS array. Works on phone and desktop."/>
+  <style>
+    :root{--accent:#ff5a5f;--muted:#666}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;margin:0;color:#111;background:#fff}
+    header{background:linear-gradient(90deg,#fff 0,#fff);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .title{font-weight:700}
+    main{padding:16px}
+    .hero{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .hero .text{max-width:65%}
+    .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+    @media(min-width:720px){.grid{grid-template-columns:repeat(3,1fr)}}
+    .card{border:1px solid #eee;border-radius:12px;overflow:hidden;background:#fff}
+    .card img{width:100%;height:180px;object-fit:cover;display:block}
+    .card-body{padding:10px}
+    .card-title{font-weight:700;margin:0 0 6px}
+    .price{color:var(--accent);font-weight:800}
+    .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+    .actions{display:flex;gap:8px}
+    .small{font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid #eee;background:#fff;cursor:pointer}
+    /* cart drawer */
+    .cart-btn{position:relative}
+    .badge{position:absolute;top:-6px;right:-6px;background:#111;color:#fff;border-radius:999px;padding:4px 7px;font-size:12px}
+    .drawer{position:fixed;right:12px;bottom:12px;width:92%;max-width:380px;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.12);transform:translateY(110%);transition:transform .25s;z-index:60}
+    .drawer.open{transform:translateY(0)}
+    .drawer header{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+    .drawer .content{max-height:60vh;overflow:auto;padding:12px}
+    .cart-item{display:flex;gap:8px;margin-bottom:10px}
+    .cart-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+    .cart-item .meta{margin:0}
+    .checkout{padding:12px;border-top:1px solid #eee}
+    input[type='number']{width:60px}
+    .empty{padding:28px;text-align:center;color:var(--muted)}
+    footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+    .search{width:100%;padding:10px;border-radius:10px;border:1px solid #eee}
+    .toprow{display:flex;gap:8px;margin-top:12px}
+    .flex{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">ES</div>
+      <div>
+        <div class="title">EasyShop</div>
+        <div style="font-size:12px;color:var(--muted)">Mobile-friendly single-file store</div>
+      </div>
+    </div>
+    <div class="flex">
+      <input id="search" class="search" placeholder="Search products..." aria-label="search">
+      <button id="openCart" class="btn cart-btn">Cart <span id="cartCount" class="badge" style="display:none">0</span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="text">
+        <h2 style="margin:0 0 6px">T-shirts & Accessories</h2>
+        <div style="color:var(--muted);font-size:14px">Simple demo store. Edit the <code>products</code> array in the JavaScript to add/remove items, change prices or images.</div>
+      </div>
+      <div>
+        <button id="demoAdd" class="btn">Add demo to cart</button>
+      </div>
+    </section>
+
+    <div class="toprow">
+      <select id="sort" class="small">
+        <option value="new">Sort: Newest</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+      </select>
+      <button id="clearStorage" class="small">Reset</button>
+    </div>
+
+    <div id="products" class="grid" aria-live="polite">
+      <!-- products render here -->
+    </div>
+  </main>
+
+  <div id="cartDrawer" class="drawer" aria-hidden="true">
+    <header>
+      <div style="font-weight:700">Your Cart</div>
+      <div><button id="closeCart" class="small">Close</button></div>
+    </header>
+    <div class="content" id="cartContent"></div>
+    <div class="checkout">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div>Total</div><div id="cartTotal" style="font-weight:800">₹0</div></div>
+      <div style="display:flex;gap:8px">
+        <input id="nameField" placeholder="Your name" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eee">
+        <input id="phoneField" placeholder="Phone" style="width:110px;padding:8px;border-radius:8px;border:1px solid #eee">
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="checkoutBtn" class="btn" style="flex:1">Place Order (demo)</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Made with ❤️ — Edit products in the script. Host for free on GitHub Pages.</footer>
+
+  <script>
+    // ====== PRODUCTS: Edit this array to change what's sold ======
+    const products = [
+      { id: 'p1', title: 'Classic White T‑shirt', price: 399, img: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=1b2a0a9f7ee9b2a2b8d6f84c0f6f3fbe', tag: 'T-shirt' },
+      { id: 'p2', title: 'Cool Black Tee', price: 449, img: 'https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2b6b3a4f8b8a9c2d0a3b1f5d4e6c7a8b', tag: 'T-shirt' },
+      { id: 'p3', title: 'Denim Jacket', price: 999, img: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=3c4b5a6a7b8c9d0e1f2a3b4c5d6e7f8a', tag: 'Jacket' },
+      { id: 'p4', title: 'Canvas Tote Bag', price: 249, img: 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f90', tag: 'Accessory' },
+      { id: 'p5', title: 'Sport Cap', price: 199, img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=5e6f7a8b9c0d1e2f3a4b5c6d7e8f9012', tag: 'Accessory' },
+      { id: 'p6', title: 'Printed Hoodie', price: 799, img: 'https://images.unsplash.com/photo-1520975911239-6b8f9b3d2b6b?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=6f7a8b9c0d1e2f3a4b5c6d7e8f901234', tag: 'Hoodie' }
+    ];
+
+    // ====== CART LOGIC (localStorage) ======
+    const CART_KEY = 'easyshop_cart_v1';
+    function loadCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY) || '{}') }catch(e){return {}} }
+    function saveCart(cart){ localStorage.setItem(CART_KEY, JSON.stringify(cart)) }
+
+    let cart = loadCart();
+
+    // ====== RENDER PRODUCTS ======
+    const productsEl = document.getElementById('products');
+    const searchEl = document.getElementById('search');
+    const sortEl = document.getElementById('sort');
+
+    function money(n){ return '₹'+Number(n).toLocaleString('en-IN') }
+
+    function renderProducts(list){ productsEl.innerHTML='';
+      if(!list.length){ productsEl.innerHTML='<div style="grid-column:1/-1;padding:18px;color:var(--muted)">No products found.</div>'; return }
+      list.forEach(p=>{
+        const div = document.createElement('div'); div.className='card';
+        div.innerHTML = `
+          <img loading="lazy" src="${p.img}" alt="${p.title}" />
+          <div class="card-body">
+            <div class="card-title">${p.title}</div>
+            <div class="meta">${p.tag}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="price">${money(p.price)}</div>
+              <div class="actions">
+                <button class="small" data-id="${p.id}" onclick="viewProduct('${p.id}')">View</button>
+                <button class="small" data-id="${p.id}" onclick="addToCart('${p.id}')">Add</button>
+              </div>
+            </div>
+          </div>
+        `;
+        productsEl.appendChild(div);
+      })
+    }
+
+    function getFiltered(){
+      const q = (searchEl.value||'').toLowerCase().trim();
+      let list = products.filter(p=>p.title.toLowerCase().includes(q) || p.tag.toLowerCase().includes(q));
+      const s = sortEl.value;
+      if(s==='price-asc') list.sort((a,b)=>a.price-b.price);
+      if(s==='price-desc') list.sort((a,b)=>b.price-a.price);
+      if(s==='new') list = list; // keep original order
+      return list;
+    }
+
+    searchEl.addEventListener('input',()=>renderProducts(getFiltered()));
+    sortEl.addEventListener('change',()=>renderProducts(getFiltered()));
+
+    // initial render
+    renderProducts(products.slice());
+
+    // ====== CART UI ======
+    const cartDrawer = document.getElementById('cartDrawer');
+    const openCartBtn = document.getElementById('openCart');
+    const closeCartBtn = document.getElementById('closeCart');
+    const cartCount = document.getElementById('cartCount');
+    const cartContent = document.getElementById('cartContent');
+    const cartTotalEl = document.getElementById('cartTotal');
+
+    function updateCartCount(){ const count = Object.values(cart).reduce((s,i)=>s+i.qty,0); if(count>0){cartCount.style.display='inline-block';cartCount.textContent=count}else{cartCount.style.display='none'} }
+
+    function addToCart(id, qty=1){ if(!cart[id]) cart[id]={id,qty:0}; cart[id].qty += qty; saveCart(cart); updateCartCount(); renderCart(); }
+    function removeFromCart(id){ delete cart[id]; saveCart(cart); updateCartCount(); renderCart(); }
+    function changeQty(id,qty){ if(qty<=0) removeFromCart(id); else { cart[id].qty = qty; saveCart(cart); updateCartCount(); renderCart(); } }
+
+    function renderCart(){ cartContent.innerHTML=''; const keys = Object.keys(cart); if(!keys.length){ cartContent.innerHTML='<div class="empty">Your cart is empty.</div>'; cartTotalEl.textContent = money(0); return }
+      let total=0;
+      keys.forEach(k=>{
+        const item = cart[k];
+        const p = products.find(x=>x.id===item.id);
+        if(!p) return;
+        total += p.price * item.qty;
+        const el = document.createElement('div'); el.className='cart-item';
+        el.innerHTML = `
+          <img src="${p.img}" alt="${p.title}">
+          <div style="flex:1">
+            <div style="font-weight:700">${p.title}</div>
+            <div class="meta">${money(p.price)} × <input onchange="(function(e){changeQty('${p.id}',Number(e.target.value))})(event)" type="number" min="0" value="${item.qty}"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="font-weight:800">${money(p.price*item.qty)}</div>
+            <button onclick="removeFromCart('${p.id}')" class="small">Remove</button>
+          </div>
+        `;
+        cartContent.appendChild(el);
+      });
+      cartTotalEl.textContent = money(total);
+    }
+
+    // expose a couple functions for inline handlers
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.changeQty = changeQty;
+
+    openCartBtn.addEventListener('click',()=>{ cartDrawer.classList.add('open'); cartDrawer.setAttribute('aria-hidden','false'); renderCart(); });
+    closeCartBtn.addEventListener('click',()=>{ cartDrawer.classList.remove('open'); cartDrawer.setAttribute('aria-hidden','true'); });
+
+    // view product (simple modal stub using alert)
+    function viewProduct(id){ const p = products.find(x=>x.id===id); if(!p) return; alert(p.title + '\n\nPrice: ' + money(p.price) + '\n\nTag: ' + p.tag); }
+    window.viewProduct = viewProduct;
+
+    // demo add
+    document.getElementById('demoAdd').addEventListener('click',()=>{ addToCart(products[0].id,1); alert('Added demo product to cart'); });
+
+    // checkout (demo) — no payments. This simulates placing an order and clears cart.
+    document.getElementById('checkoutBtn').addEventListener('click',()=>{
+      const name = document.getElementById('nameField').value.trim();
+      const phone = document.getElementById('phoneField').value.trim();
+      if(!name || !phone){ alert('Please enter name and phone (demo)'); return }
+      const order = { id: 'ORD'+Date.now(), name, phone, cart, total: Object.keys(cart).reduce((s,k)=>{
+        const it = cart[k]; const p = products.find(x=>x.id===it.id); return s + (p? p.price * it.qty:0);
+      },0), ts: new Date().toISOString() };
+      console.log('Order placed (demo)', order);
+      alert('Order placed! (Demo)\nOrder ID: ' + order.id + '\nTotal: ' + money(order.total));
+      cart = {}; saveCart(cart); updateCartCount(); renderCart(); cartDrawer.classList.remove('open');
+    });
+
+    // utilities
+    document.getElementById('clearStorage').addEventListener('click',()=>{ if(confirm('Reset demo data and cart?')){ localStorage.removeItem(CART_KEY); cart = {}; saveCart(cart); updateCartCount(); renderCart(); } });
+
+    // init
+    updateCartCount();
+
+    // small accessibility: close drawer on Escape
+    window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') cartDrawer.classList.remove('open'); });
+  </script>
+</body>
+</html>
